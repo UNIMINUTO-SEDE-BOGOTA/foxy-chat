@@ -1,18 +1,15 @@
+// src/app/components/ChatPanel.tsx
 import { useState, useRef, useEffect } from "react";
 import { Send, Menu } from "lucide-react";
 import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
 import { motion } from "motion/react";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import type { Message } from "../../models/chat.model";
 
 interface ChatPanelProps {
   chatId: string;
+  messages: Message[];
+  isTyping: boolean;
+  onSend: (content: string) => Promise<void>;
   onMenuClick: () => void;
 }
 
@@ -42,59 +39,26 @@ function FoxyWelcomeAvatar({ className = "" }: { className?: string }) {
   );
 }
 
-export function ChatPanel({ chatId, onMenuClick }: ChatPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: ChatPanelProps) {
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: input, timestamp: new Date() };
-    setMessages((prev) => [...prev, userMessage]);
+    const text = input;
     setInput("");
-    setIsTyping(true);
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(), role: "assistant",
-        content: "Gracias por tu mensaje. Como agente IA, puedo ayudarte con diversas tareas, análisis de datos, redacción de contenido y mucho más. ¿Qué te gustaría hacer?",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 1500);
+    await onSend(text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const handleSuggestionClick = (description: string) => {
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: description, timestamp: new Date() };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(), role: "assistant",
-        content: "Gracias por tu mensaje. Como agente IA, puedo ayudarte con diversas tareas, análisis de datos, redacción de contenido y mucho más. ¿Qué te gustaría hacer?",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 1500);
-  };
 
-  const suggestions = [
-    { icon: "✍️", title: "Redacción", description: "Escribe un correo profesional" },
-    { icon: "🧠", title: "Conceptos", description: "Explica algo complejo de forma simple" },
-    { icon: "💡", title: "Ideas", description: "Ideas innovadoras para mi proyecto" },
-    { icon: "📊", title: "Datos", description: "Analiza e interpreta mis datos" },
-  ];
 
   return (
     <div className="flex-1 h-screen flex flex-col bg-background overflow-hidden">
@@ -108,7 +72,7 @@ export function ChatPanel({ chatId, onMenuClick }: ChatPanelProps) {
           <FoxyAvatar className="w-9 h-9" />
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-0.5">
-              {["F", "O", "X", "Y"].map((char, i) => (
+              {["F","O","X","Y"].map((char, i) => (
                 <motion.span
                   key={i}
                   className="font-extrabold text-base leading-none"
@@ -130,24 +94,21 @@ export function ChatPanel({ chatId, onMenuClick }: ChatPanelProps) {
         <div className="space-y-3 max-w-4xl mx-auto">
 
           {messages.length === 0 && !isTyping ? (
-            /* ── Bienvenida: todo en una sola vista ── */
             <div className="flex flex-col items-center justify-center pt-4 pb-2">
-
-              {/* Imagen más pequeña */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ duration: 0.6, ease: "backOut" }}
                 className="mb-2"
               >
-                <FoxyWelcomeAvatar className="w-24 h-24 md:w-32 md:h-32" />
+                <FoxyWelcomeAvatar className="w-36 h-36 md:w-52 md:h-52" />
               </motion.div>
 
               <motion.h2
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-xl md:text-2xl font-semibold text-foreground text-center mb-1"
+                className="text-3xl md:text-5xl font-semibold text-foreground text-center mb-1"
               >
                 ¡Hola! Soy{" "}
                 <span className="font-extrabold" style={{ color: "hsl(var(--primary))" }}>FOXY</span>
@@ -157,35 +118,12 @@ export function ChatPanel({ chatId, onMenuClick }: ChatPanelProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-muted-foreground text-center mb-4 max-w-sm text-xs md:text-sm px-4"
+                className="text-muted-foreground text-center max-w-sm text-xs md:text-sm px-4"
               >
-                Estoy aquí para ayudarte. Selecciona una opción o escribe tu consulta.
+                Estoy aquí para ayudarte. Escribe tu consulta para comenzar.
               </motion.p>
-
-              {/* 4 tarjetas compactas en una fila */}
-              <div className="grid grid-cols-4 gap-2 w-full max-w-2xl px-2">
-                {suggestions.map((s, i) => (
-                  <motion.button
-                    key={i}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 + i * 0.07 }}
-                    onClick={() => handleSuggestionClick(s.description)}
-                    className="flex flex-col items-start gap-1.5 p-2.5 rounded-xl bg-card border-2 border-border hover:border-primary hover:shadow-md transition-all duration-200 text-left group"
-                  >
-                    <span className="text-xl group-hover:scale-110 transition-transform">{s.icon}</span>
-                    <span className="text-xs font-semibold text-card-foreground group-hover:text-primary transition-colors leading-tight">
-                      {s.title}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground leading-tight line-clamp-2">
-                      {s.description}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
             </div>
           ) : (
-            /* ── Mensajes ── */
             <>
               {messages.map((message) => (
                 <motion.div
@@ -242,7 +180,7 @@ export function ChatPanel({ chatId, onMenuClick }: ChatPanelProps) {
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isTyping}
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 self-end h-10"
           >
             <Send className="w-4 h-4" />

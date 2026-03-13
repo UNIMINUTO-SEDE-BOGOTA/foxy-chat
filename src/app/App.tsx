@@ -1,57 +1,32 @@
+// src/app/App.tsx
 import { useState, useEffect } from "react";
 import { WelcomeAnimation } from "./components/WelcomeAnimation";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { MobileSidebar } from "./components/MobileSidebar";
 import { ChatPanel } from "./components/ChatPanel";
-
-interface Chat {
-  id: string;
-  title: string;
-  timestamp: Date;
-  preview: string;
-}
+import { useN8nChat } from "../hooks/useN8nChat";
+import { createNewChat } from "../models/chat.model";
 
 export default function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: "1",
-      title: "Nueva conversación",
-      timestamp: new Date(),
-      preview: "Inicia una conversación con el asistente...",
-    },
-  ]);
-  const [activeChat, setActiveChat] = useState("1");
+
+  const {
+    chats,
+    activeChat,
+    setActiveChat,
+    createChat,
+    deleteChat,
+    sendMessage,
+    isTyping,
+    activeMessages,
+  } = useN8nChat([createNewChat()]);
 
   useEffect(() => {
-    // Aplicar el tema al documento
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    if (isDark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, [isDark]);
-
-  const handleNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: "Nueva conversación",
-      timestamp: new Date(),
-      preview: "Inicia una nueva conversación...",
-    };
-    setChats([newChat, ...chats]);
-    setActiveChat(newChat.id);
-  };
-
-  const handleDeleteChat = (id: string) => {
-    setChats(chats.filter((chat) => chat.id !== id));
-    if (activeChat === id && chats.length > 1) {
-      const remainingChats = chats.filter((chat) => chat.id !== id);
-      setActiveChat(remainingChats[0].id);
-    }
-  };
 
   if (showWelcome) {
     return <WelcomeAnimation onComplete={() => setShowWelcome(false)} />;
@@ -63,8 +38,8 @@ export default function App() {
         chats={chats}
         activeChat={activeChat}
         onChatSelect={setActiveChat}
-        onNewChat={handleNewChat}
-        onDeleteChat={handleDeleteChat}
+        onNewChat={createChat}
+        onDeleteChat={deleteChat}
         isDark={isDark}
         onThemeToggle={() => setIsDark(!isDark)}
       />
@@ -74,14 +49,17 @@ export default function App() {
         chats={chats}
         activeChat={activeChat}
         onChatSelect={setActiveChat}
-        onNewChat={handleNewChat}
-        onDeleteChat={handleDeleteChat}
+        onNewChat={createChat}
+        onDeleteChat={deleteChat}
         isDark={isDark}
         onThemeToggle={() => setIsDark(!isDark)}
       />
-      <ChatPanel 
-        key={activeChat} 
+      <ChatPanel
+        key={activeChat}
         chatId={activeChat}
+        messages={activeMessages}
+        isTyping={isTyping}
+        onSend={sendMessage}
         onMenuClick={() => setIsMobileMenuOpen(true)}
       />
     </div>
