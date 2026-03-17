@@ -4,7 +4,7 @@ import { WelcomeAnimation } from "./components/WelcomeAnimation";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { MobileSidebar } from "./components/MobileSidebar";
 import { ChatPanel } from "./components/ChatPanel";
-import { TourGuide } from "./components/TourGuide";
+import { TourGuide } from "./components/Tourguide"
 import { useN8nChat } from "../hooks/useN8nChat";
 import { createNewChat } from "../models/chat.model";
 
