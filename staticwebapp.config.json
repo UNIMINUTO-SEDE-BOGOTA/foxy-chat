@@ -3,7 +3,7 @@
     {
       "route": "/webhook/foxy-chat",
       "redirect": "https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net/webhook/foxy-chat",
-      "statusCode": 308
+      "statusCode": 302
     }
   ],
   "navigationFallback": {
