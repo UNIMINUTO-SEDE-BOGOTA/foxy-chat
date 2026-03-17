@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "route": "/webhook/*",
+      "rewrite": "https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net/webhook/*"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/webhook/*"]
+  }
+}
