@@ -37,4 +37,5 @@ export interface N8nPayload {
   action: "sendMessage";
   sessionId: string;
   chatInput: string;
+  pregunta: string; // fallback field
 }

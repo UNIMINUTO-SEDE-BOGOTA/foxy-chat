@@ -100,10 +100,8 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
           action: "sendMessage",
           sessionId: activeChat,
           chatInput: content.trim(),
+          pregunta: content.trim(), // fallback por si n8n recibe body anidado
         };
-
-        console.log("📤 Enviando a n8n:", payload);
-        console.log("🌐 URL:", N8N_WEBHOOK_URL);
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
