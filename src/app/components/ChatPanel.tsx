@@ -16,14 +16,11 @@ interface ChatPanelProps {
 function FoxyAvatar({ className = "" }: { className?: string }) {
   return (
     <div className={`rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary to-accent flex-shrink-0 ${className}`}>
-      <img
-        src="2.png"
-        alt="FOXY"
-        className="w-full h-full object-cover"
+      <img src="2.png" alt="FOXY" className="w-full h-full object-cover"
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).style.display = "none";
-          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-          if (fallback) fallback.style.display = "flex";
+          const fb = e.currentTarget.nextElementSibling as HTMLElement;
+          if (fb) fb.style.display = "flex";
         }}
       />
       <span className="text-white font-extrabold text-xs hidden w-full h-full items-center justify-center" style={{ display: "none" }}>FX</span>
@@ -58,11 +55,8 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-
-
   return (
     <div className="flex-1 h-screen flex flex-col bg-background overflow-hidden">
-
       {/* Header */}
       <div className="p-3 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -73,15 +67,12 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-0.5">
               {["F","O","X","Y"].map((char, i) => (
-                <motion.span
-                  key={i}
+                <motion.span key={i}
                   className="font-extrabold text-base leading-none"
                   style={{ color: "hsl(var(--primary))" }}
                   animate={{ y: [0, -2, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
-                >
-                  {char}
-                </motion.span>
+                >{char}</motion.span>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">Conectado y listo para ayudar</p>
@@ -92,44 +83,29 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4">
         <div className="space-y-3 max-w-4xl mx-auto">
-
           {messages.length === 0 && !isTyping ? (
             <div className="flex flex-col items-center justify-center pt-4 pb-2">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.6, ease: "backOut" }}
-                className="mb-2"
-              >
+              <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.6, ease: "backOut" }} className="mb-2">
                 <FoxyWelcomeAvatar className="w-36 h-36 md:w-52 md:h-52" />
               </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-3xl md:text-5xl font-semibold text-foreground text-center mb-1"
-              >
+                className="text-3xl md:text-5xl font-semibold text-foreground text-center mb-1">
                 ¡Hola! Soy{" "}
                 <span className="font-extrabold" style={{ color: "hsl(var(--primary))" }}>FOXY</span>
               </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-muted-foreground text-center max-w-sm text-xs md:text-sm px-4"
-              >
+                className="text-muted-foreground text-center max-w-sm text-xs md:text-sm px-4">
                 Estoy aquí para ayudarte. Escribe tu consulta para comenzar.
               </motion.p>
             </div>
           ) : (
             <>
               {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <motion.div key={message.id}
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
                   className={`flex items-end gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
@@ -162,7 +138,6 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
               </div>
             </motion.div>
           )}
-
           <div ref={bottomRef} />
         </div>
       </div>
@@ -171,6 +146,7 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
       <div className="p-3 border-t border-border bg-card flex-shrink-0">
         <div className="max-w-4xl mx-auto flex gap-2">
           <textarea
+            data-tour="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -178,11 +154,8 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
             rows={2}
             className="flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          <Button
-            onClick={handleSend}
-            disabled={!input.trim() || isTyping}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 self-end h-10"
-          >
+          <Button onClick={handleSend} disabled={!input.trim() || isTyping}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 self-end h-10">
             <Send className="w-4 h-4" />
           </Button>
         </div>

@@ -98,9 +98,12 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
 
         const payload: N8nPayload = {
           action: "sendMessage",
-          sessionId: activeChat,   // ← el id del chat ES el sessionId de n8n
+          sessionId: activeChat,
           chatInput: content.trim(),
         };
+
+        console.log("📤 Enviando a n8n:", payload);
+        console.log("🌐 URL:", N8N_WEBHOOK_URL);
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",

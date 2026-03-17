@@ -4,6 +4,7 @@ import { WelcomeAnimation } from "./components/WelcomeAnimation";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { MobileSidebar } from "./components/MobileSidebar";
 import { ChatPanel } from "./components/ChatPanel";
+import { TourGuide } from "./components/TourGuide";
 import { useN8nChat } from "../hooks/useN8nChat";
 import { createNewChat } from "../models/chat.model";
 
@@ -11,16 +12,12 @@ export default function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   const {
-    chats,
-    activeChat,
-    setActiveChat,
-    createChat,
-    deleteChat,
-    sendMessage,
-    isTyping,
-    activeMessages,
+    chats, activeChat, setActiveChat,
+    createChat, deleteChat,
+    sendMessage, isTyping, activeMessages,
   } = useN8nChat([createNewChat()]);
 
   useEffect(() => {
@@ -42,6 +39,7 @@ export default function App() {
         onDeleteChat={deleteChat}
         isDark={isDark}
         onThemeToggle={() => setIsDark(!isDark)}
+        onHelpClick={() => { setShowTour(false); setTimeout(() => setShowTour(true), 50); }}
       />
       <MobileSidebar
         isOpen={isMobileMenuOpen}
@@ -53,6 +51,8 @@ export default function App() {
         onDeleteChat={deleteChat}
         isDark={isDark}
         onThemeToggle={() => setIsDark(!isDark)}
+        onHelpClick={() => { setShowTour(false); setTimeout(() => setShowTour(true), 50); }}
+        tourActive={showTour}
       />
       <ChatPanel
         key={activeChat}
@@ -61,6 +61,13 @@ export default function App() {
         isTyping={isTyping}
         onSend={sendMessage}
         onMenuClick={() => setIsMobileMenuOpen(true)}
+      />
+
+      {/* Tour — controla la sidebar mobile internamente */}
+      <TourGuide
+        forceOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onMobileSidebarChange={setIsMobileMenuOpen}
       />
     </div>
   );

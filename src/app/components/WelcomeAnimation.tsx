@@ -155,7 +155,7 @@ export function WelcomeAnimation({ onComplete }: WelcomeAnimationProps) {
             animate={stage >= 2 ? { opacity: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            Tu asistente inteligente
+            Ecosistema de Inteligencia Institucional
           </motion.p>
 
           {/* Dots loader */}
