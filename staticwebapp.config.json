@@ -1,12 +1,13 @@
 {
   "routes": [
     {
-      "route": "/api/chat",
-      "rewrite": "https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net/webhook/foxy-chat"
+      "route": "/webhook/foxy-chat",
+      "redirect": "https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net/webhook/foxy-chat",
+      "statusCode": 302
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/api/*"]
+    "exclude": ["/assets/*", "/webhook/*"]
   }
 }
