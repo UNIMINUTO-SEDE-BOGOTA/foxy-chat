@@ -16,10 +16,11 @@ export default defineConfig({
   assetsInclude: ['**/*.svg', '**/*.csv'],
   server: {
     proxy: {
-      '/webhook': {
+      '/api/chat': {
         target: 'https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net',
         changeOrigin: true,
         secure: true,
+        rewrite: (path) => path.replace(/^\/api\/chat/, '/webhook/foxy-chat'),
       },
     },
   },
