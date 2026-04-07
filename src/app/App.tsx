@@ -7,6 +7,7 @@ import { ChatPanel } from "./components/ChatPanel";
 import { TourGuide } from "./components/Tourguide"
 import { useN8nChat } from "../hooks/useN8nChat";
 import { createNewChat } from "../models/chat.model";
+import { InstallPWA } from '@/app/components/InstallPWA'
 
 export default function App() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -69,6 +70,9 @@ export default function App() {
         onClose={() => setShowTour(false)}
         onMobileSidebarChange={setIsMobileMenuOpen}
       />
+
+      {/* PWA Install Prompt */}
+      <InstallPWA />
     </div>
   );
 }

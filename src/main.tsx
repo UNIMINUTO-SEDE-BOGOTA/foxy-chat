@@ -1,7 +1,14 @@
+import { createRoot } from "react-dom/client";
+import App from "./app/App.tsx";
+import "./styles/index.css";
+import { registerSW } from 'virtual:pwa-register'
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
+registerSW({ immediate: true })
 
-  createRoot(document.getElementById("root")!).render(<App />);
-  
+//  Captura el evento antes de que React se monte
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  (window as any).__pwaPrompt = e;  // lo guardamos globalmente
+});
+
+createRoot(document.getElementById("root")!).render(<App />);
