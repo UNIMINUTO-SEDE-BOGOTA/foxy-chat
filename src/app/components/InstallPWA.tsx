@@ -185,7 +185,7 @@ export function InstallPWA({ onBannerChange }: InstallPWAProps) {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white">Instala la Ficha</p>
+              <p className="text-sm font-medium text-white">Instala El Chat</p>
               <p className="text-xs text-white/70">Accede rápido desde tu pantalla de inicio</p>
             </div>
             <button
