@@ -5,6 +5,10 @@
   },
   "routes": [
     {
+      "route": "/api/chat",
+      "rewrite": "https://n8necosystem-amdxgsdnd3dgewaj.centralus-01.azurewebsites.net/webhook/foxy-chat"
+    },
+    {
       "route": "/api/*",
       "allowedRoles": ["anonymous"]
     }
