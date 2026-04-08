@@ -1,10 +1,11 @@
 // src/app/components/ChatSidebar.tsx
-import { MessageSquare, Plus, Search, Trash2, Settings, HelpCircle } from "lucide-react";
+import { MessageSquare, Plus, Search, Trash2, Settings, HelpCircle, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import { motion } from "motion/react";
 import { ThemeToggle } from "./ThemeToggle";
+import { useState, useRef, useEffect } from "react";
 
 interface Chat {
   id: string;
@@ -24,14 +25,57 @@ interface ChatSidebarProps {
   onHelpClick: () => void;
 }
 
+function SettingsMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <Button
+        variant="ghost" size="icon"
+        className="rounded-full h-8 w-8"
+        title="Configuración"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
+
+      {open && (
+        <div className="absolute left-0 top-10 z-50 w-52 rounded-xl border border-sidebar-border bg-sidebar shadow-md overflow-hidden">
+          <div className="px-3 py-2 border-b border-sidebar-border">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Configuración</p>
+          </div>
+          <div className="p-1">
+            <button
+              onClick={() => { setOpen(false); window.location.reload(); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-left"
+            >
+              <RefreshCw className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span>Reiniciar aplicación</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ChatSidebar({
   chats, activeChat, onChatSelect, onNewChat,
   onDeleteChat, isDark, onThemeToggle, onHelpClick,
 }: ChatSidebarProps) {
   return (
-    <div className="hidden md:flex w-80 h-screen bg-sidebar border-r border-sidebar-border flex-col">
+    <div className="hidden md:flex w-80 bg-sidebar border-r border-sidebar-border flex-col" style={{ height: '100dvh' }}>
       {/* Header */}
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -48,9 +92,7 @@ export function ChatSidebar({
             >
               <HelpCircle className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" title="Configuración">
-              <Settings className="h-4 w-4" />
-            </Button>
+            <SettingsMenu />
             <span data-tour="theme-toggle">
               <ThemeToggle isDark={isDark} onToggle={onThemeToggle} />
             </span>
@@ -68,7 +110,7 @@ export function ChatSidebar({
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border flex-shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -80,7 +122,7 @@ export function ChatSidebar({
       </div>
 
       {/* Chat List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-2">
           {chats.map((chat, index) => (
             <motion.div
@@ -116,18 +158,8 @@ export function ChatSidebar({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground">U</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-sidebar-foreground truncate">Usuario</p>
-            <p className="text-xs text-muted-foreground">Plan Gratuito</p>
-          </div>
-        </div>
-      </div>
+      {/* Footer vacío — reservado para uso futuro */}
+      <div className="flex-shrink-0 h-2 border-t border-sidebar-border" />
     </div>
   );
 }

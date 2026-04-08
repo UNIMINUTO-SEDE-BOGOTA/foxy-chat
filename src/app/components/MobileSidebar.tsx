@@ -1,10 +1,11 @@
 // src/app/components/MobileSidebar.tsx
-import { MessageSquare, Plus, Search, Trash2, Settings, HelpCircle, X } from "lucide-react";
+import { MessageSquare, Plus, Search, Trash2, Settings, HelpCircle, X, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "./ThemeToggle";
+import { useState, useRef, useEffect } from "react";
 
 interface Chat {
   id: string;
@@ -24,7 +25,75 @@ interface MobileSidebarProps {
   isDark: boolean;
   onThemeToggle: () => void;
   onHelpClick: () => void;
-  tourActive?: boolean; // cuando el tour está activo, subir z-index sobre el overlay
+  tourActive?: boolean;
+}
+
+// Reemplaza el componente SettingsMenu en MobileSidebar.tsx
+
+function SettingsMenu() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="ghost" size="icon"
+        className="rounded-full h-8 w-8"
+        title="Configuración"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Settings className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-45" : ""}`} />
+      </Button>
+
+      {/* Panel anclado al fondo — nunca se corta */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15 }}
+            className="fixed bottom-0 left-0 w-[280px] z-[80] bg-sidebar border-t border-sidebar-border rounded-t-2xl overflow-hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Handle drag visual */}
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+
+            <div className="px-4 py-2 border-b border-sidebar-border flex items-center justify-between">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Configuración</p>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-2">
+              <button
+                onClick={() => { setOpen(false); window.location.reload(); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-sidebar-foreground hover:bg-sidebar-accent active:scale-[0.98] transition-all text-left"
+              >
+                <RefreshCw className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <span>Reiniciar aplicación</span>
+              </button>
+            </div>
+
+            <div className="h-2" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Overlay para cerrar tocando afuera */}
+      {open && (
+        <div
+          className="fixed inset-0 z-[75]"
+          onClick={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
 }
 
 export function MobileSidebar({
@@ -51,7 +120,10 @@ export function MobileSidebar({
             }`}
           >
             {/* Header */}
-            <div className="p-4 border-b border-sidebar-border">
+            <div
+              className="p-4 border-b border-sidebar-border flex-shrink-0"
+              style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -68,9 +140,7 @@ export function MobileSidebar({
                   >
                     <HelpCircle className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" title="Configuración">
-                    <Settings className="h-4 w-4" />
-                  </Button>
+                  <SettingsMenu />
                   <span data-tour="theme-toggle">
                     <ThemeToggle isDark={isDark} onToggle={onThemeToggle} />
                   </span>
@@ -91,7 +161,7 @@ export function MobileSidebar({
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-sidebar-border">
+            <div className="p-4 border-b border-sidebar-border flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -103,7 +173,7 @@ export function MobileSidebar({
             </div>
 
             {/* Chat List */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="p-2">
                 {chats.map((chat, index) => (
                   <motion.div
@@ -139,17 +209,11 @@ export function MobileSidebar({
               </div>
             </ScrollArea>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-sidebar-border">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground">U</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-sidebar-foreground truncate">Usuario</p>
-                </div>
-              </div>
-            </div>
+            {/* Footer vacío con safe area */}
+            <div
+              className="flex-shrink-0 border-t border-sidebar-border"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            />
           </motion.div>
         </>
       )}
