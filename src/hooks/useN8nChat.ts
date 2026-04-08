@@ -113,11 +113,12 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
 
         const data = await res.json();
 
-        // n8n puede devolver { output: "..." } o { text: "..." } o string directo
-        const responseText: string =
-          typeof data === "string"
-            ? data
-            : data.output ?? data.text ?? data.message ?? JSON.stringify(data);
+       
+        const normalized = Array.isArray(data) ? data[0] : data;
+      const responseText: string =
+        typeof normalized === "string"
+          ? normalized
+          : normalized.output ?? normalized.text ?? normalized.message ?? JSON.stringify(normalized);
 
         const assistantMsg: Message = {
           id: crypto.randomUUID(),
