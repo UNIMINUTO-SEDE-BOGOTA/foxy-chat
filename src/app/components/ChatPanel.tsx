@@ -56,10 +56,9 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
   };
 
   return (
-    // ✅ Cambio 1: h-screen → 100dvh (respeta el teclado virtual y barras del SO)
     <div className="flex-1 flex flex-col bg-background overflow-hidden" style={{ height: '100dvh' }}>
 
-      {/* Header — ✅ Cambio 2: safe-area-inset-top para notch */}
+      {/* Header */}
       <div
         className="p-3 border-b border-border bg-card flex-shrink-0"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
@@ -87,7 +86,6 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 min-h-0">
-        {/* ✅ Cambio 3: min-h-0 en el padre y el div scroll para que flex no desborde */}
         <div className="space-y-3 max-w-4xl mx-auto">
           {messages.length === 0 && !isTyping ? (
             <div className="flex flex-col items-center justify-center pt-4 pb-2">
@@ -148,10 +146,15 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
         </div>
       </div>
 
-      {/* Input — ✅ Cambio 4: safe-area-inset-bottom para home indicator */}
+      {/* Input — FIX: sticky bottom + font-size 16px para evitar zoom en móvil */}
       <div
         className="p-3 border-t border-border bg-card flex-shrink-0"
-        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        style={{
+          paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 10,
+        }}
       >
         <div className="max-w-4xl mx-auto flex gap-2 items-end">
           <textarea
@@ -161,9 +164,13 @@ export function ChatPanel({ chatId, messages, isTyping, onSend, onMenuClick }: C
             onKeyDown={handleKeyDown}
             placeholder="Escribe tu mensaje..."
             rows={2}
-            // ✅ Cambio 5: maxHeight para que el textarea no empuje el botón fuera de pantalla
-            className="flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            style={{ maxHeight: '120px', overflowY: 'auto' }}
+            className="flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            style={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              fontSize: '16px',   // FIX: evita zoom automático en iOS/Android (<16px lo dispara)
+            }}
           />
           <Button onClick={handleSend} disabled={!input.trim() || isTyping}
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 h-10 flex-shrink-0">
