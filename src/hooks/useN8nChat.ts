@@ -111,14 +111,31 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
 
         if (!res.ok) throw new Error(`n8n error ${res.status}`);
 
-        const data = await res.json();
+        const raw = await res.json();
 
-       
-        const normalized = Array.isArray(data) ? data[0] : data;
-      const responseText: string =
-        typeof normalized === "string"
-          ? normalized
-          : normalized.output ?? normalized.text ?? normalized.message ?? JSON.stringify(normalized);
+        // n8n devuelve { output: "```json\n{...}\n```" }
+        const normalized = Array.isArray(raw) ? raw[0] : raw;
+
+        // 1. Obtener el texto crudo del campo más probable
+        let textValue: string =
+          typeof normalized === "string"
+            ? normalized
+            : normalized.respuesta ?? normalized.output ?? normalized.text ?? normalized.message ?? JSON.stringify(normalized);
+
+        // 2. Si el texto viene envuelto en un bloque markdown ```json ... ```, extraer solo el JSON interior
+        const mdJsonMatch = textValue.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (mdJsonMatch) {
+          try {
+            const inner = JSON.parse(mdJsonMatch[1].trim());
+            textValue = inner.respuesta ?? inner.output ?? inner.text ?? inner.message ?? JSON.stringify(inner);
+          } catch {
+            // Si no parsea, usar el contenido dentro del bloque tal cual
+            textValue = mdJsonMatch[1].trim();
+          }
+        }
+
+        const responseText = textValue;
+
 
         const assistantMsg: Message = {
           id: crypto.randomUUID(),
