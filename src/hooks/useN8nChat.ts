@@ -21,11 +21,9 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
   const [activeChat, setActiveChat] = useState<string>(initialChats[0]?.id ?? "");
   const [isTyping, setIsTyping] = useState(false);
 
-  /** Mensajes del chat activo */
   const activeMessages: Message[] =
     chats.find((c) => c.id === activeChat)?.messages ?? [];
 
-  /** Actualiza campos de un chat por id */
   const updateChat = useCallback(
     (id: string, patch: Partial<Chat>) => {
       setChats((prev) =>
@@ -35,7 +33,6 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
     []
   );
 
-  /** Agrega un mensaje al chat activo */
   const addMessage = useCallback(
     (chatId: string, message: Message) => {
       setChats((prev) =>
@@ -45,7 +42,6 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
                 ...c,
                 messages: [...c.messages, message],
                 preview: message.content.slice(0, 60),
-                // Primera vez que el usuario escribe → usar su texto como título
                 title:
                   c.messages.length === 0 && message.role === "user"
                     ? message.content.slice(0, 40)
@@ -58,14 +54,12 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
     []
   );
 
-  /** Crea un chat nuevo y lo activa */
   const createChat = useCallback(() => {
     const newChat = createNewChat();
     setChats((prev) => [newChat, ...prev]);
     setActiveChat(newChat.id);
   }, []);
 
-  /** Elimina un chat y activa el siguiente disponible */
   const deleteChat = useCallback(
     (id: string) => {
       setChats((prev) => {
@@ -79,7 +73,6 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
     [activeChat]
   );
 
-  /** Envía un mensaje al webhook de n8n */
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim()) return;
@@ -100,7 +93,7 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
           action: "sendMessage",
           sessionId: activeChat,
           chatInput: content.trim(),
-          pregunta: content.trim(), // fallback por si n8n recibe body anidado
+          pregunta: content.trim(),
         };
 
         const res = await fetch(N8N_WEBHOOK_URL, {
@@ -112,38 +105,41 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
         if (!res.ok) throw new Error(`n8n error ${res.status}`);
 
         const raw = await res.json();
-
-        // n8n devuelve { output: "```json\n{...}\n```" }
         const normalized = Array.isArray(raw) ? raw[0] : raw;
 
-        // 1. Obtener el texto crudo del campo más probable
         let textValue: string =
           typeof normalized === "string"
             ? normalized
             : normalized.respuesta ?? normalized.output ?? normalized.text ?? normalized.message ?? JSON.stringify(normalized);
 
-        // 2. Si el texto viene envuelto en un bloque markdown ```json ... ```, extraer solo el JSON interior
         const mdJsonMatch = textValue.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (mdJsonMatch) {
           try {
             const inner = JSON.parse(mdJsonMatch[1].trim());
             textValue = inner.respuesta ?? inner.output ?? inner.text ?? inner.message ?? JSON.stringify(inner);
           } catch {
-            // Si no parsea, usar el contenido dentro del bloque tal cual
             textValue = mdJsonMatch[1].trim();
           }
         }
 
-        const responseText = textValue;
+        // ── URL viene en campo separado "imagen_url" ──────────────────
+        const chartUrl: string | undefined = normalized.imagen_url ?? undefined;
 
+        // Limpiar texto quitando ![...](cualquier-cosa-o-vacío)
+        const cleanText = textValue
+          .replace(/!\[.*?\]\([^)]*\)/g, "")
+          .trim();
+        // ─────────────────────────────────────────────────────────────
 
         const assistantMsg: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: responseText,
+          content: cleanText,
+          chartUrl,
           timestamp: new Date(),
         };
         addMessage(activeChat, assistantMsg);
+
       } catch (err) {
         const errorMsg: Message = {
           id: crypto.randomUUID(),
