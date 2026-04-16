@@ -105,6 +105,7 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
         if (!res.ok) throw new Error(`n8n error ${res.status}`);
 
         const raw = await res.json();
+        console.log("🔴 RAW n8n response:", JSON.stringify(raw, null, 2));
         const normalized = Array.isArray(raw) ? raw[0] : raw;
 
         let textValue: string =
@@ -123,12 +124,39 @@ export function useN8nChat(initialChats: Chat[]): UseN8nChatReturn {
         }
 
         // ── URL viene en campo separado "imagen_url" ──────────────────
-        const chartUrl: string | undefined = normalized.imagen_url ?? undefined;
+        let chartUrl: string | undefined = normalized.imagen_url ?? undefined;
 
-        // Limpiar texto quitando ![...](cualquier-cosa-o-vacío)
-        const cleanText = textValue
-          .replace(/!\[.*?\]\([^)]*\)/g, "")
-          .trim();
+// ── FALLBACK: buscar URL de quickchart dentro del texto ───────
+if (!chartUrl) {
+  const quickchartMatch = textValue.match(
+    /https?:\/\/quickchart\.io\/chart[^\s)\]"']*/
+  );
+  if (quickchartMatch) chartUrl = quickchartMatch[0];
+}
+
+// Sanitizar font malformado en la URL
+if (chartUrl) {
+  try {
+    const urlObj = new URL(chartUrl);
+    const cParam = urlObj.searchParams.get('c');
+    if (cParam) {
+      let fixedJson = decodeURIComponent(cParam);
+      fixedJson = fixedJson.replace(
+        /"font"\s*:\s*"weight"\s*:\s*"(\w+)"\s*,\s*"size"\s*:\s*(\d+)/g,
+        '"font":{"weight":"$1","size":$2}'
+      );
+      urlObj.searchParams.set('c', fixedJson);
+      chartUrl = urlObj.toString();
+    }
+  } catch (_) {}
+}
+
+// Limpiar texto: quitar ![...](url) y [texto](url-quickchart)
+const cleanText = textValue
+  .replace(/!\[.*?\]\([^)]*\)/g, "")
+  .replace(/\[.*?\]\(https?:\/\/quickchart\.io[^)]*\)/g, "")
+  .trim();
+
         // ─────────────────────────────────────────────────────────────
 
         const assistantMsg: Message = {
