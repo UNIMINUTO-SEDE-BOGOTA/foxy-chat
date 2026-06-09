@@ -3,7 +3,9 @@ import { useState, useCallback } from "react";
 import { createNewChat } from "../models/chat.model";
 import type { Chat, Message, N8nPayload } from "../models/chat.model";
 
-const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL ?? '/api/chat';
+const N8N_WEBHOOK_URL = import.meta.env.DEV
+  ? '/api/chat'
+  : import.meta.env.VITE_N8N_WEBHOOK_URL
 
 interface UseN8nChatReturn {
   chats: Chat[];
