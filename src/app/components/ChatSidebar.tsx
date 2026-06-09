@@ -51,21 +51,48 @@ function SettingsMenu() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -6, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -6, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed left-4 top-16 z-50 w-52 rounded-xl lg-menu shadow-lg overflow-hidden"
+            className="lg-menu"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              right: 0,
+              zIndex: 50,
+              width: "200px",
+              borderRadius: "12px",
+              overflow: "hidden",
+            }}
           >
-            <div className="px-3 py-2 border-b lg-divider-border">
-              <p className="text-xs lg-text-muted font-medium uppercase tracking-wide">Configuración</p>
+            <div style={{ padding: "8px 12px 6px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <p style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(160,200,220,0.45)", margin: 0 }}>
+                Configuración
+              </p>
             </div>
-            <div className="p-1">
+            <div style={{ padding: "4px" }}>
               <button
                 onClick={() => { setOpen(false); window.location.reload(); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm lg-text-secondary hover:bg-white/10 transition-colors text-left"
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "rgba(196,222,240,0.85)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background 0.18s ease",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
-                <RefreshCw className="w-4 h-4 lg-text-muted flex-shrink-0" />
+                <RefreshCw style={{ width: "14px", height: "14px", flexShrink: 0, color: "rgba(160,200,220,0.50)" }} />
                 <span>Reiniciar aplicación</span>
               </button>
             </div>
@@ -96,7 +123,7 @@ export function ChatSidebar({
   return (
     <div
       className="hidden md:flex w-80 flex-col lg-sidebar"
-      style={{ height: "100dvh" }}
+      style={{ height: "100dvh", overflow: "hidden" }}
     >
       {/* Header */}
       <div className="p-4 lg-divider-border-b flex-shrink-0">
@@ -148,8 +175,8 @@ export function ChatSidebar({
       </div>
 
       {/* Chat List */}
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="p-2">
+      <ScrollArea className="flex-1 min-h-0 w-full">
+        <div className="p-2" style={{ width: "100%", boxSizing: "border-box" }}>
           <p className="section-label">Recientes</p>
           <AnimatePresence mode="popLayout">
             {filteredChats.length === 0 ? (
@@ -170,28 +197,34 @@ export function ChatSidebar({
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: index * 0.03, duration: 0.3 }}
                   layout
+                  style={{ width: "100%", minWidth: 0 }}
                 >
                   <div
                     data-tour={index === 0 ? "chat-item" : undefined}
                     className={`group relative p-3 rounded-xl mb-1.5 cursor-pointer transition-all duration-300 ${
                       activeChat === chat.id ? "lg-chat-active" : "lg-chat"
                     }`}
+                    style={{ width: "100%", boxSizing: "border-box", overflow: "hidden" }}
                     onClick={() => onChatSelect(chat.id)}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="chat-icon-wrap flex-shrink-0">
+                    <div className="flex items-start justify-between gap-2" style={{ minWidth: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", minWidth: 0, overflow: "hidden" }}>
+                          <div className="chat-icon-wrap" style={{ flexShrink: 0 }}>
                             <MessageSquare className="w-3 h-3" />
                           </div>
-                          <h3 className="lg-text-primary font-medium truncate text-sm">
+                          <h3
+                            className="lg-text-primary font-medium text-sm"
+                            style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}
+                          >
                             {chat.title}
                           </h3>
                         </div>
 
                         <p
-                          className="text-xs pl-8 lg-text-secondary"
+                          className="text-xs lg-text-secondary"
                           style={{
+                            paddingLeft: "32px",
                             display: "-webkit-box",
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: "vertical",
@@ -202,19 +235,20 @@ export function ChatSidebar({
                           {chat.preview}
                         </p>
 
-                        <p className="text-xs lg-text-muted mt-1 pl-8">
+                        <p className="text-xs lg-text-muted mt-1" style={{ paddingLeft: "32px" }}>
                           {chat.timestamp.toLocaleDateString()}
                         </p>
                       </div>
 
                       {/* Active indicator dot */}
                       {activeChat === chat.id && (
-                        <div className="active-dot flex-shrink-0 mt-1" />
+                        <div className="active-dot" style={{ flexShrink: 0, marginTop: "4px" }} />
                       )}
 
                       <Button
                         variant="ghost" size="icon"
-                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-7 w-7 rounded-lg hover:bg-red-500/20 flex-shrink-0"
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-7 w-7 rounded-lg hover:bg-red-500/20"
+                        style={{ flexShrink: 0 }}
                         onClick={(e) => { e.stopPropagation(); onDeleteChat(chat.id); }}
                       >
                         <Trash2 className="w-3.5 h-3.5 text-red-400" />
@@ -250,7 +284,7 @@ export function ChatSidebar({
           --c5: #b8cc70;
         }
 
-        /* ─── LIGHT MODE — Azul marino profundo con radiales de paleta ── */
+        /* ─── LIGHT MODE ─────────────────────────────────────────────── */
         :root,
         .light {
           --sb-bg-base:        linear-gradient(155deg, #1e3a4a 0%, #1a3040 35%, #162438 65%, #0f1e2e 100%);
@@ -305,7 +339,7 @@ export function ChatSidebar({
           --sb-section-color:  rgba(160,200,220,0.38);
         }
 
-        /* ─── DARK MODE — Azul marino más profundo ──────────────────── */
+        /* ─── DARK MODE ──────────────────────────────────────────────── */
         .dark {
           --sb-bg-base:        linear-gradient(160deg, rgba(6,14,28,0.97) 0%, rgba(8,18,36,0.96) 50%, rgba(10,20,32,0.97) 100%);
           --sb-radial:
@@ -369,7 +403,6 @@ export function ChatSidebar({
           overflow: hidden;
         }
 
-        /* Top shine line */
         .lg-sidebar::after {
           content: '';
           position: absolute;
@@ -380,6 +413,17 @@ export function ChatSidebar({
         }
 
         .lg-sidebar > * { position: relative; z-index: 1; }
+
+        /* ─── FIX: ScrollArea de Radix no desborda horizontalmente ──── */
+        .lg-sidebar [data-radix-scroll-area-viewport] {
+          overflow-x: hidden !important;
+        }
+
+        .lg-sidebar [data-radix-scroll-area-viewport] > div {
+          display: block !important;
+          width: 100% !important;
+          min-width: 0 !important;
+        }
 
         /* ─── Foxy mark ──────────────────────────────────────────────── */
         .foxy-mark {
