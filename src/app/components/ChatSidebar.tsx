@@ -55,7 +55,7 @@ function SettingsMenu() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-0 top-10 z-[9999] w-52 rounded-xl lg-menu shadow-lg overflow-hidden"
+            className="fixed left-4 top-16 z-50 w-52 rounded-xl lg-menu shadow-lg overflow-hidden"
           >
             <div className="px-3 py-2 border-b lg-divider-border">
               <p className="text-xs lg-text-muted font-medium uppercase tracking-wide">Configuración</p>
@@ -63,7 +63,7 @@ function SettingsMenu() {
             <div className="p-1">
               <button
                 onClick={() => { setOpen(false); window.location.reload(); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm lg-text-secondary hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm lg-text-secondary hover:bg-white/10 transition-colors text-left"
               >
                 <RefreshCw className="w-4 h-4 lg-text-muted flex-shrink-0" />
                 <span>Reiniciar aplicación</span>
@@ -102,6 +102,10 @@ export function ChatSidebar({
       <div className="p-4 lg-divider-border-b flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
+            <div className="foxy-mark">
+              <div className="foxy-dot" />
+              <span className="foxy-name">Foxy</span>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -146,6 +150,7 @@ export function ChatSidebar({
       {/* Chat List */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2">
+          <p className="section-label">Recientes</p>
           <AnimatePresence mode="popLayout">
             {filteredChats.length === 0 ? (
               <motion.div
@@ -168,25 +173,22 @@ export function ChatSidebar({
                 >
                   <div
                     data-tour={index === 0 ? "chat-item" : undefined}
-                    className={`group relative p-3 rounded-xl mb-2 cursor-pointer transition-all duration-300 ${
-                      activeChat === chat.id
-                        ? "lg-chat-active"
-                        : "lg-chat"
+                    className={`group relative p-3 rounded-xl mb-1.5 cursor-pointer transition-all duration-300 ${
+                      activeChat === chat.id ? "lg-chat-active" : "lg-chat"
                     }`}
                     onClick={() => onChatSelect(chat.id)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#e15e29]/20 to-[#d1b742]/20 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="w-3 h-3 text-[#d1b742]" />
+                          <div className="chat-icon-wrap flex-shrink-0">
+                            <MessageSquare className="w-3 h-3" />
                           </div>
                           <h3 className="lg-text-primary font-medium truncate text-sm">
                             {chat.title}
                           </h3>
                         </div>
 
-                        {/* Preview — clampado a 2 líneas, nunca estira la caja */}
                         <p
                           className="text-xs pl-8 lg-text-secondary"
                           style={{
@@ -204,6 +206,12 @@ export function ChatSidebar({
                           {chat.timestamp.toLocaleDateString()}
                         </p>
                       </div>
+
+                      {/* Active indicator dot */}
+                      {activeChat === chat.id && (
+                        <div className="active-dot flex-shrink-0 mt-1" />
+                      )}
+
                       <Button
                         variant="ghost" size="icon"
                         className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-7 w-7 rounded-lg hover:bg-red-500/20 flex-shrink-0"
@@ -213,7 +221,7 @@ export function ChatSidebar({
                       </Button>
                     </div>
 
-                    {/* Shine on hover */}
+                    {/* Shimmer on hover */}
                     <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
                       <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
                     </div>
@@ -226,236 +234,220 @@ export function ChatSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="flex-shrink-0 h-12 lg-divider-border-t flex items-center justify-center">
-        <p className="text-[10px] lg-text-muted tracking-wider">
-          FOXY • Ecosistema de Inteligencia Institucional
-        </p>
+      <div className="flex-shrink-0 h-12 lg-divider-border-t flex items-center justify-center gap-2">
+        <div className="footer-line" />
+        <p className="footer-text">Ecosistema de Inteligencia Institucional</p>
+        <div className="footer-line" />
       </div>
 
       <style>{`
-        /* ─── Tokens light/dark ─────────────────────────────────────── */
-
-        /* Light - Fondo azul celeste, letras NEGRAS/GRISES */
-
-        :root,
-.light {
-  /* Paleta Premium - Alineada con chart colors */
-  --color-teal: #008B8B;
-  --color-blue-dark: #2E5871;
-  --color-gold: #D1B742;
-  --color-coral: #bf6962;
-  --color-lime: #b8cc70;
-
-  /* Fondo: Liquid Glass Premium - Color sólido elegante */
-  --sb-bg: #f5f7fa;
-
-  /* Bordes Premium - Alineados con paleta */
-  --sb-border: rgba(0, 139, 139, 0.30);
-  --sb-border-light: rgba(0, 139, 139, 0.15);
-  --sb-border-accent: rgba(191, 105, 98, 0.25);
-
-  /* Textos */
-  --sb-text-primary: #1a1a1a;
-  --sb-text-secondary: #4a4a4a;
-  --sb-text-muted: #7a7a7a;
-
-  /* Inputs - Glass Effect */
-  --sb-input-bg: rgba(255, 255, 255, 0.88);
-  --sb-input-border: rgba(0, 139, 139, 0.30);
-  --sb-input-border-hover: rgba(0, 139, 139, 0.50);
-  --sb-input-focus: rgba(191, 105, 98, 0.25);
-  --sb-input-shadow: 0 8px 32px rgba(46, 88, 113, 0.12);
-
-  /* Botones - Glass Icons */
-  --sb-btn-bg: rgba(255, 255, 255, 0.70);
-  --sb-btn-border: rgba(0, 139, 139, 0.25);
-  --sb-btn-hover-bg: rgba(0, 139, 139, 0.12);
-  --sb-btn-hover-border: rgba(0, 139, 139, 0.40);
-  --sb-btn-shadow: 0 4px 15px rgba(46, 88, 113, 0.10);
-
-  /* Botón Primario - Gradiente Paleta Completa */
-  --sb-btn-primary: linear-gradient(135deg, #2E5871 0%, #bf6962 40%, #D1B742 100%);
-  --sb-btn-primary-hover: linear-gradient(135deg, #1a3a50 0%, #a84a3a 40%, #c4a635 100%);
-  /* Botón Primario - Sombra premium */
-  --sb-btn-primary-shadow: 0 8px 24px rgba(191, 105, 98, 0.35);
-  --sb-btn-primary-glow: 0 0 20px rgba(191, 105, 98, 0.25);
-
-  /* Divisores Elegantes */
-  --sb-divider: rgba(0, 139, 139, 0.15);
-  --sb-divider-accent: rgba(191, 105, 98, 0.10);
-
-  /* Chats - Glass Cards */
-  --sb-chat-bg: rgba(255, 255, 255, 0.60);
-  --sb-chat-bg-hover: rgba(255, 255, 255, 0.75);
-  --sb-chat-border: rgba(0, 139, 139, 0.15);
-  --sb-chat-border-hover: rgba(0, 139, 139, 0.30);
-  --sb-chat-shadow: 0 2px 8px rgba(46, 88, 113, 0.05);
-  --sb-chat-shadow-hover: 0 12px 32px rgba(46, 88, 113, 0.15);
-
-  /* Chat Activo - Premium Gradient */
-  --sb-chat-active-from: rgba(0, 139, 139, 0.20);
-  --sb-chat-active-to: rgba(191, 105, 98, 0.12);
-  --sb-chat-active-bdr: rgba(191, 105, 98, 0.40);
-  --sb-chat-active-shadow: 0 12px 28px rgba(191, 105, 98, 0.18);
-
-  /* Menú Flotante */
-  --sb-menu-bg: rgba(255, 255, 255, 0.88);
-  --sb-menu-border: rgba(0, 139, 139, 0.25);
-  --sb-menu-shadow: 0 16px 48px rgba(46, 88, 113, 0.20);
-
-  /* Efectos Decorativos - Reflejos Especulares */
-  --sb-radial:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(0, 139, 139, 0.20) 0%,
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(191, 105, 98, 0.15) 0%,
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 10% 100%,
-      rgba(209, 183, 66, 0.15) 0%,
-      transparent 45%
-    ),
-    radial-gradient(
-      circle at 100% 50%,
-      rgba(0, 139, 139, 0.10) 0%,
-      transparent 40%
-    );
-}
-
-        /* Dark - SIN CAMBIOS */
-        .dark {
-          --sb-bg:               rgba(10, 22, 40, 0.82);
-          --sb-border:           rgba(209, 183, 66, 0.15);
-          --sb-text-primary:     #ffffff;
-          --sb-text-secondary:   rgba(255, 255, 255, 0.70);
-          --sb-text-muted:       rgba(255, 255, 255, 0.40);
-          --sb-input-bg:         rgba(255, 255, 255, 0.05);
-          --sb-input-border:     rgba(209, 183, 66, 0.20);
-          --sb-input-focus:      rgba(209, 183, 66, 0.20);
-          --sb-btn-bg:           rgba(255, 255, 255, 0.03);
-          --sb-btn-border:       rgba(209, 183, 66, 0.20);
-          --sb-btn-hover:        rgba(209, 183, 66, 0.15);
-          --sb-divider:          rgba(255, 255, 255, 0.10);
-          --sb-chat-hover:       rgba(255, 255, 255, 0.05);
-          --sb-chat-active-from: rgba(225, 94, 41, 0.12);
-          --sb-chat-active-to:   rgba(209, 183, 66, 0.08);
-          --sb-chat-active-bdr:  rgba(209, 183, 66, 0.30);
-          --sb-menu-bg:          rgba(10, 22, 40, 0.96);
-          --sb-radial:           radial-gradient(
-                                   ellipse at 20% 30%,
-                                   rgba(225, 94, 41, 0.08) 0%,
-                                   rgba(0, 139, 139, 0.04) 40%,
-                                   rgba(209, 183, 66, 0.06) 70%,
-                                   transparent 100%
-                                 );
+        /* ─── Paleta de chart colors ──────────────────────────────────── */
+        :root {
+          --c1: #008B8B;
+          --c2: #2E5871;
+          --c3: #D1B742;
+          --c4: #bf6962;
+          --c5: #b8cc70;
         }
 
-        /* ─── Componentes usando tokens ────────────────────────────── */
+        /* ─── LIGHT MODE — Azul marino profundo con radiales de paleta ── */
+        :root,
+        .light {
+          --sb-bg-base:        linear-gradient(155deg, #1e3a4a 0%, #1a3040 35%, #162438 65%, #0f1e2e 100%);
+          --sb-radial:
+            radial-gradient(ellipse at 15% 0%,   rgba(0,139,139,0.55) 0%, transparent 45%),
+            radial-gradient(ellipse at 88% 8%,   rgba(209,183,66,0.22) 0%, transparent 38%),
+            radial-gradient(ellipse at 4%  80%,  rgba(191,105,98,0.22) 0%, transparent 42%),
+            radial-gradient(ellipse at 90% 92%,  rgba(184,204,112,0.14) 0%, transparent 38%);
+          --sb-border:         rgba(255,255,255,0.10);
+          --sb-shine:          linear-gradient(90deg, transparent, rgba(255,255,255,0.20), rgba(209,183,66,0.15), transparent);
 
-        /* Sidebar base - Liquid Glass Premium */
+          --sb-text-primary:   #e4f0f8;
+          --sb-text-secondary: rgba(196,222,240,0.78);
+          --sb-text-muted:     rgba(160,200,220,0.45);
+
+          --sb-divider:        rgba(255,255,255,0.07);
+
+          --sb-input-bg:       rgba(255,255,255,0.07);
+          --sb-input-border:   rgba(255,255,255,0.11);
+          --sb-input-focus-bdr:rgba(0,200,200,0.50);
+          --sb-input-focus-glow:rgba(0,139,139,0.14);
+
+          --sb-btn-bg:         rgba(255,255,255,0.07);
+          --sb-btn-border:     rgba(255,255,255,0.10);
+          --sb-btn-hover-bg:   rgba(0,139,139,0.18);
+          --sb-btn-hover-bdr:  rgba(0,139,139,0.32);
+
+          --sb-btn-primary:    linear-gradient(130deg, #2E5871 0%, #bf6962 55%, #D1B742 100%);
+          --sb-btn-primary-shadow: 0 6px 20px rgba(191,105,98,0.30), inset 0 1px 0 rgba(255,255,255,0.22);
+          --sb-btn-primary-hover-shadow: 0 10px 28px rgba(191,105,98,0.42), inset 0 1px 0 rgba(255,255,255,0.28);
+
+          --sb-chat-bg:        rgba(255,255,255,0.05);
+          --sb-chat-border:    rgba(255,255,255,0.07);
+          --sb-chat-hover-bg:  rgba(255,255,255,0.10);
+          --sb-chat-hover-bdr: rgba(0,139,139,0.25);
+          --sb-chat-active-bg: rgba(0,139,139,0.18);
+          --sb-chat-active-bdr:rgba(0,180,180,0.38);
+          --sb-chat-active-shadow: 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
+
+          --sb-active-dot:     #008B8B;
+          --sb-active-dot-glow:rgba(0,139,139,0.60);
+
+          --sb-icon-bg:        rgba(0,139,139,0.20);
+          --sb-icon-border-active: rgba(0,139,139,0.35);
+
+          --sb-menu-bg:        rgba(15,30,48,0.96);
+          --sb-menu-border:    rgba(255,255,255,0.10);
+          --sb-menu-shadow:    0 16px 48px rgba(0,0,0,0.40);
+
+          --sb-scrollbar:      rgba(0,139,139,0.22);
+          --sb-footer-line:    linear-gradient(90deg, transparent, rgba(0,139,139,0.20), transparent);
+          --sb-section-color:  rgba(160,200,220,0.38);
+        }
+
+        /* ─── DARK MODE — Azul marino más profundo ──────────────────── */
+        .dark {
+          --sb-bg-base:        linear-gradient(160deg, rgba(6,14,28,0.97) 0%, rgba(8,18,36,0.96) 50%, rgba(10,20,32,0.97) 100%);
+          --sb-radial:
+            radial-gradient(ellipse at 15% 0%,   rgba(0,139,139,0.16) 0%, transparent 50%),
+            radial-gradient(ellipse at 88% 10%,  rgba(209,183,66,0.09) 0%, transparent 40%),
+            radial-gradient(ellipse at 3%  78%,  rgba(191,105,98,0.09) 0%, transparent 45%),
+            radial-gradient(ellipse at 92% 93%,  rgba(184,204,112,0.05) 0%, transparent 36%);
+          --sb-border:         rgba(255,255,255,0.06);
+          --sb-shine:          linear-gradient(90deg, transparent, rgba(255,255,255,0.07), rgba(209,183,66,0.10), transparent);
+
+          --sb-text-primary:   #e0ecf8;
+          --sb-text-secondary: rgba(190,215,235,0.72);
+          --sb-text-muted:     rgba(140,180,205,0.40);
+
+          --sb-divider:        rgba(255,255,255,0.06);
+
+          --sb-input-bg:       rgba(255,255,255,0.04);
+          --sb-input-border:   rgba(255,255,255,0.08);
+          --sb-input-focus-bdr:rgba(0,139,139,0.50);
+          --sb-input-focus-glow:rgba(0,139,139,0.10);
+
+          --sb-btn-bg:         rgba(255,255,255,0.04);
+          --sb-btn-border:     rgba(255,255,255,0.07);
+          --sb-btn-hover-bg:   rgba(209,183,66,0.10);
+          --sb-btn-hover-bdr:  rgba(209,183,66,0.22);
+
+          --sb-btn-primary:    linear-gradient(130deg, #2E5871 0%, #bf6962 55%, #D1B742 100%);
+          --sb-btn-primary-shadow: 0 6px 20px rgba(191,105,98,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+          --sb-btn-primary-hover-shadow: 0 10px 28px rgba(191,105,98,0.38), inset 0 1px 0 rgba(255,255,255,0.24);
+
+          --sb-chat-bg:        rgba(255,255,255,0.03);
+          --sb-chat-border:    rgba(255,255,255,0.05);
+          --sb-chat-hover-bg:  rgba(255,255,255,0.07);
+          --sb-chat-hover-bdr: rgba(0,139,139,0.20);
+          --sb-chat-active-bg: rgba(0,139,139,0.14);
+          --sb-chat-active-bdr:rgba(0,139,139,0.34);
+          --sb-chat-active-shadow: 0 4px 16px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.05);
+
+          --sb-active-dot:     #008B8B;
+          --sb-active-dot-glow:rgba(0,139,139,0.50);
+
+          --sb-icon-bg:        rgba(0,139,139,0.14);
+          --sb-icon-border-active: rgba(0,139,139,0.28);
+
+          --sb-menu-bg:        rgba(6,14,28,0.97);
+          --sb-menu-border:    rgba(255,255,255,0.07);
+          --sb-menu-shadow:    0 16px 48px rgba(0,0,0,0.55);
+
+          --sb-scrollbar:      rgba(209,183,66,0.16);
+          --sb-footer-line:    linear-gradient(90deg, transparent, rgba(209,183,66,0.12), transparent);
+          --sb-section-color:  rgba(140,180,205,0.36);
+        }
+
+        /* ─── Sidebar base ───────────────────────────────────────────── */
         .lg-sidebar {
-          background: var(--sb-bg);
-          backdrop-filter: blur(18px) saturate(110%);
-          -webkit-backdrop-filter: blur(18px) saturate(110%);
+          background: var(--sb-radial), var(--sb-bg-base);
+          backdrop-filter: blur(40px) saturate(160%);
+          -webkit-backdrop-filter: blur(40px) saturate(160%);
           border-right: 1px solid var(--sb-border);
-          box-shadow: 
-            -2px 0 32px rgba(10, 34, 64, 0.15),
-            inset 1px 0 0 rgba(255, 255, 255, 0.15),
-            inset -1px 0 0 rgba(10, 34, 64, 0.10);
           position: relative;
           overflow: hidden;
         }
 
-        .lg-sidebar::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: var(--sb-radial);
-          pointer-events: none;
-          z-index: 0;
-        }
-
+        /* Top shine line */
         .lg-sidebar::after {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.25) 50%,
-            transparent 100%
-          );
+          top: 0; left: 0; right: 0; height: 1px;
+          background: var(--sb-shine);
           pointer-events: none;
           z-index: 0;
         }
 
-        .lg-sidebar > * {
-          position: relative;
-          z-index: 1;
+        .lg-sidebar > * { position: relative; z-index: 1; }
+
+        /* ─── Foxy mark ──────────────────────────────────────────────── */
+        .foxy-mark {
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
-        /* Texto - Premium */
-        .lg-text-primary   { color: var(--sb-text-primary); font-weight: 600; }
+        .foxy-dot {
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #D1B742, #b8cc70);
+          opacity: 0.75;
+        }
+
+        .foxy-name {
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--sb-text-muted);
+        }
+
+        /* ─── Section label ──────────────────────────────────────────── */
+        .section-label {
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--sb-section-color);
+          padding: 4px 6px 8px;
+        }
+
+        /* ─── Texto ──────────────────────────────────────────────────── */
+        .lg-text-primary   { color: var(--sb-text-primary); }
         .lg-text-secondary { color: var(--sb-text-secondary); }
         .lg-text-muted     { color: var(--sb-text-muted); }
 
-        /* Divisores Premium */
+        /* ─── Divisores ──────────────────────────────────────────────── */
         .lg-divider-border   { border: 1px solid var(--sb-divider); }
         .lg-divider-border-b { border-bottom: 1px solid var(--sb-divider); }
         .lg-divider-border-t { border-top: 1px solid var(--sb-divider); }
 
-        /* Botones icon - Unitono con fondo */
+        /* ─── Botones icono ──────────────────────────────────────────── */
         .lg-btn {
-          background: #f5f7fa !important;
-          border: 1px solid rgba(0, 139, 139, 0.10) !important;
-          color: var(--sb-text-primary) !important;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: none;
-          font-weight: 500;
+          background: var(--sb-btn-bg) !important;
+          border: 1px solid var(--sb-btn-border) !important;
+          color: var(--sb-text-secondary) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .lg-btn:hover {
-          background: #f5f7fa !important;
-          border-color: rgba(0, 139, 139, 0.20) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(46, 88, 113, 0.08) !important;
+          background: var(--sb-btn-hover-bg) !important;
+          border-color: var(--sb-btn-hover-bdr) !important;
+          transform: translateY(-1px);
         }
 
-        /* Dark mode - Botones unitono con fondo */
-        .dark .lg-btn {
-          background: rgba(10, 22, 40, 0.82) !important;
-          border: 1px solid rgba(209, 183, 66, 0.10) !important;
-        }
-
-        .dark .lg-btn:hover {
-          background: rgba(10, 22, 40, 0.82) !important;
-          border-color: rgba(209, 183, 66, 0.20) !important;
-        }
-
-        /* Botón primario - Naranja → Dorado Premium */
+        /* ─── Botón primario ─────────────────────────────────────────── */
         .lg-btn-primary {
           background: var(--sb-btn-primary) !important;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+          border: 1px solid rgba(255,255,255,0.20) !important;
           color: white !important;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 
-            var(--sb-btn-primary-shadow),
-            var(--sb-btn-primary-glow),
-            inset 0 1px 0 rgba(255, 255, 255, 0.30);
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: var(--sb-btn-primary-shadow);
           position: relative;
           overflow: hidden;
         }
@@ -463,146 +455,123 @@ export function ChatSidebar({
         .lg-btn-primary::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.25),
-            transparent
-          );
-          transition: left 0.6s ease;
+          top: 0; left: -100%; width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+          transition: left 0.50s ease;
         }
 
-        .lg-btn-primary:hover::before {
-          left: 100%;
-        }
+        .lg-btn-primary:hover::before { left: 100%; }
 
         .lg-btn-primary:hover {
-          background: var(--sb-btn-primary-hover) !important;
-          transform: translateY(-3px);
-          box-shadow: 
-            0 12px 32px rgba(191, 105, 98, 0.40),
-            0 0 28px rgba(191, 105, 98, 0.30) !important;
+          transform: translateY(-2px);
+          box-shadow: var(--sb-btn-primary-hover-shadow) !important;
         }
 
-        /* Input de búsqueda - Glass */
+        /* ─── Input búsqueda ─────────────────────────────────────────── */
         .lg-input {
           background: var(--sb-input-bg) !important;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
           border: 1px solid var(--sb-input-border) !important;
           color: var(--sb-text-primary) !important;
-          transition: all 0.3s ease;
-          box-shadow: var(--sb-input-shadow);
-          font-weight: 500;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          transition: all 0.25s ease;
         }
 
-        .lg-input:hover {
-          border-color: var(--sb-input-border-hover) !important;
-          background: rgba(255, 255, 255, 0.90) !important;
-        }
+        .lg-input::placeholder { color: var(--sb-text-muted) !important; }
 
         .lg-input:focus {
-          background: rgba(255, 255, 255, 0.95) !important;
-          border-color: #008B8B !important;
-          box-shadow: 
-            var(--sb-input-shadow),
-            0 0 0 3px var(--sb-input-focus) !important;
+          border-color: var(--sb-input-focus-bdr) !important;
+          box-shadow: 0 0 0 3px var(--sb-input-focus-glow) !important;
           outline: none;
         }
 
-        .lg-input::placeholder {
-          color: var(--sb-text-muted) !important;
-          opacity: 0.7;
-        }
-
-        /* Item de chat — estado normal - Glass Card */
+        /* ─── Chat items ─────────────────────────────────────────────── */
         .lg-chat {
           background: var(--sb-chat-bg);
           border: 1px solid var(--sb-chat-border);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
-          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: var(--sb-chat-shadow);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .lg-chat::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.10) 0%,
-            transparent 100%
-          );
-          pointer-events: none;
+          transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .lg-chat:hover {
-          background: var(--sb-chat-bg-hover) !important;
-          border-color: var(--sb-chat-border-hover) !important;
-          transform: translateX(6px) translateY(-2px);
-          box-shadow: var(--sb-chat-shadow-hover) !important;
+          background: var(--sb-chat-hover-bg) !important;
+          border-color: var(--sb-chat-hover-bdr) !important;
+          transform: translateX(4px);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
 
-        /* Item de chat — activo - Premium Gradient */
         .lg-chat-active {
-          background: linear-gradient(
-            135deg,
-            var(--sb-chat-active-from) 0%,
-            var(--sb-chat-active-to) 100%
-          ) !important;
+          background: var(--sb-chat-active-bg) !important;
           border: 1px solid var(--sb-chat-active-bdr) !important;
-          box-shadow: 
-            var(--sb-chat-active-shadow),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+          box-shadow: var(--sb-chat-active-shadow) !important;
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
         }
 
-        /* Menú flotante settings - Glass Premium */
+        /* Chat icon wrap */
+        .chat-icon-wrap {
+          width: 24px; height: 24px;
+          border-radius: 7px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.11);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--sb-text-secondary);
+          flex-shrink: 0;
+        }
+
+        .lg-chat-active .chat-icon-wrap {
+          background: var(--sb-icon-bg);
+          border-color: var(--sb-icon-border-active);
+          color: #008B8B;
+        }
+
+        /* Active dot */
+        .active-dot {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: var(--sb-active-dot);
+          box-shadow: 0 0 6px var(--sb-active-dot-glow);
+          flex-shrink: 0;
+        }
+
+        /* ─── Menú flotante ──────────────────────────────────────────── */
         .lg-menu {
           background: var(--sb-menu-bg);
-          backdrop-filter: blur(20px) saturate(110%);
-          -webkit-backdrop-filter: blur(20px) saturate(110%);
+          backdrop-filter: blur(24px) saturate(140%);
+          -webkit-backdrop-filter: blur(24px) saturate(140%);
           border: 1px solid var(--sb-menu-border);
           box-shadow: var(--sb-menu-shadow);
-          border-radius: 12px;
         }
 
-        /* Scrollbar - Elegante */
-        .lg-sidebar ::-webkit-scrollbar { 
-          width: 6px; 
+        /* ─── Footer ─────────────────────────────────────────────────── */
+        .footer-line {
+          height: 1px;
+          flex: 1;
+          background: var(--sb-footer-line);
         }
 
-        .lg-sidebar ::-webkit-scrollbar-track { 
-          background: transparent; 
+        .footer-text {
+          font-size: 9px;
+          font-weight: 500;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          color: var(--sb-text-muted);
+          opacity: 0.55;
+          white-space: nowrap;
         }
 
+        /* ─── Scrollbar ──────────────────────────────────────────────── */
+        .lg-sidebar ::-webkit-scrollbar       { width: 4px; }
+        .lg-sidebar ::-webkit-scrollbar-track { background: transparent; }
         .lg-sidebar ::-webkit-scrollbar-thumb {
-          background: rgba(0, 139, 139, 0.25);
-          border-radius: 3px;
-          transition: background 0.3s ease;
+          background: var(--sb-scrollbar);
+          border-radius: 2px;
         }
-
         .lg-sidebar ::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 139, 139, 0.45);
-        }
-
-        /* Animaciones */
-        @keyframes liquidShine {
-          0%   { background-position: -200% 0; }
-          100% { background-position:  200% 0; }
-        }
-
-        @keyframes softFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-2px); }
+          background: rgba(0,139,139,0.38);
         }
       `}</style>
     </div>
