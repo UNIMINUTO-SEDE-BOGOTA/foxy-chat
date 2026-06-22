@@ -182,22 +182,11 @@ function ChartImage({ url }: { url: string }) {
 function MessageBubble({ message, isLast }: { message: Message; isLast: boolean }) {
   const isUser = message.role === "user";
 
-  const [shown, setShown] = useState(isUser || !isLast ? message.content : "");
-  const animated = useRef(false);
+  // CAMBIO: ahora siempre mostramos el contenido completo, sin animación letra por letra
+  const [shown, setShown] = useState(message.content);
 
   useEffect(() => {
-    if (isUser || !isLast) { setShown(message.content); return; }
-    if (animated.current) { setShown(message.content); return; }
-    animated.current = true;
-    setShown("");
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setShown(message.content.slice(0, i));
-      if (i >= message.content.length) clearInterval(interval);
-    }, 16);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setShown(message.content);
   }, [message.content]);
 
   return (

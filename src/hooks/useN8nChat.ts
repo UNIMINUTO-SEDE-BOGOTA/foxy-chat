@@ -52,7 +52,7 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
     saveActiveChatId(activeChat);
   }, [activeChat]);
 
-  // ── Resto de la lógica (sin cambios en los callbacks) ─────────
+  // ── Resto de la lógica ────────────────────────────────────────
   const activeMessages: Message[] =
     chats.find((c) => c.id === activeChat)?.messages ?? [];
 
@@ -92,11 +92,18 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
     setActiveChat(newChat.id);
   }, []);
 
+  // 🔁 Nuevo: nunca permitir que la lista de chats quede vacía
   const deleteChat = useCallback(
     (id: string) => {
       setChats((prev) => {
         const filtered = prev.filter((c) => c.id !== id);
-        if (activeChat === id && filtered.length > 0) {
+        if (filtered.length === 0) {
+          // Si no quedan chats, creamos uno nuevo automáticamente
+          const newChat = createNewChat();
+          setActiveChat(newChat.id);
+          return [newChat];
+        }
+        if (activeChat === id) {
           setActiveChat(filtered[0].id);
         }
         return filtered;
@@ -109,13 +116,22 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
     async (content: string) => {
       if (!content.trim()) return;
 
+      // 🛡️ Protección: si el chat activo ya no existe, crear uno nuevo
+      let currentChatId = activeChat;
+      if (!chats.some((c) => c.id === currentChatId)) {
+        const newChat = createNewChat();
+        setChats((prev) => [...prev, newChat]);
+        setActiveChat(newChat.id);
+        currentChatId = newChat.id;
+      }
+
       const userMsg: Message = {
         id: crypto.randomUUID(),
         role: "user",
         content: content.trim(),
         timestamp: new Date(),
       };
-      addMessage(activeChat, userMsg);
+      addMessage(currentChatId, userMsg);
       setIsTyping(true);
 
       try {
@@ -123,12 +139,12 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
 
         const payload: N8nPayload = {
           action: "sendMessage",
-          sessionId: activeChat, // este es el ID que no debe cambiar
+          sessionId: currentChatId, // 👈 Usamos el ID seguro
           chatInput: content.trim(),
           pregunta: content.trim(),
         };
 
-        console.log("📤 Enviando mensaje con sessionId:", activeChat);
+        console.log("📤 Enviando mensaje con sessionId:", currentChatId);
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
@@ -136,9 +152,45 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
           body: JSON.stringify(payload),
         });
 
-        if (!res.ok) throw new Error(`n8n error ${res.status}`);
+        // ── Leer respuesta como texto primero para evitar errores de parseo ──
+        const textResponse = await res.text();
+        console.log("📡 Status:", res.status, "| Body length:", textResponse.length);
 
-        const raw = await res.json();
+        if (!res.ok) {
+          let errorMsg = `n8n error ${res.status}`;
+          if (textResponse) {
+            try {
+              const errorJson = JSON.parse(textResponse);
+              errorMsg = errorJson.message || errorJson.error || errorMsg;
+            } catch {
+              // No es JSON, usar los primeros 200 caracteres
+              if (textResponse.length <= 200) {
+                errorMsg = textResponse;
+              }
+            }
+            console.error("📡 Error body:", textResponse.substring(0, 200));
+          }
+          throw new Error(errorMsg);
+        }
+
+        // Si la respuesta está vacía, tirar error claro
+        if (!textResponse || textResponse.trim() === "") {
+          throw new Error(
+            "El servidor respondió con una respuesta vacía. Probablemente n8n tardó demasiado o hubo un error interno. Reintentá por favor."
+          );
+        }
+
+        // Parsear JSON de forma segura
+        let raw: any;
+        try {
+          raw = JSON.parse(textResponse);
+        } catch (parseError) {
+          console.error("📡 No es JSON válido:", textResponse.substring(0, 200));
+          throw new Error(
+            "El servidor respondió en un formato no válido. Reintentá por favor."
+          );
+        }
+
         console.log("🔴 RAW n8n response:", JSON.stringify(raw, null, 2));
         const normalized = Array.isArray(raw) ? raw[0] : raw;
 
@@ -166,8 +218,10 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
           }
         }
 
+        // ── URL viene en campo separado "imagen_url" ──────────────────
         let chartUrl: string | undefined = normalized.imagen_url ?? undefined;
 
+        // ── FALLBACK: buscar URL de quickchart dentro del texto ───────
         if (!chartUrl) {
           const quickchartMatch = textValue.match(
             /https?:\/\/quickchart\.io\/chart[^\s)\]"']*/
@@ -175,6 +229,7 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
           if (quickchartMatch) chartUrl = quickchartMatch[0];
         }
 
+        // Sanitizar font malformado en la URL
         if (chartUrl) {
           try {
             const urlObj = new URL(chartUrl);
@@ -191,10 +246,13 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
           } catch (_) {}
         }
 
+        // Limpiar texto: quitar ![...](url) y [texto](url-quickchart)
         const cleanText = textValue
           .replace(/!\[.*?\]\([^)]*\)/g, "")
           .replace(/\[.*?\]\(https?:\/\/quickchart\.io[^)]*\)/g, "")
           .trim();
+
+        // ─────────────────────────────────────────────────────────────
 
         const assistantMsg: Message = {
           id: crypto.randomUUID(),
@@ -203,22 +261,23 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
           chartUrl,
           timestamp: new Date(),
         };
-        addMessage(activeChat, assistantMsg);
+        addMessage(currentChatId, assistantMsg);
       } catch (err) {
+        const errorObj = err as Error;
+        console.error("❌ Error en sendMessage:", errorObj.message);
+        
         const errorMsg: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `⚠️ Error al conectar con el agente: ${
-            (err as Error).message
-          }`,
+          content: `⚠️ Error al conectar con el agente: ${errorObj.message}`,
           timestamp: new Date(),
         };
-        addMessage(activeChat, errorMsg);
+        addMessage(currentChatId, errorMsg);
       } finally {
         setIsTyping(false);
       }
     },
-    [activeChat, addMessage]
+    [activeChat, chats, addMessage]
   );
 
   return {
