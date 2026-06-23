@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "./ThemeToggle";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface Chat {
   id: string;
@@ -121,13 +121,41 @@ export function MobileSidebar({
   isDark, onThemeToggle, onHelpClick, tourActive = false,
 }: MobileSidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [longPressedChat, setLongPressedChat] = useState<string | null>(null);
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const filteredChats = chats.filter(chat =>
     chat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     chat.preview.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleChatSelect = (id: string) => { onChatSelect(id); onClose(); };
+  const handleChatSelect = (id: string) => { 
+    onChatSelect(id); 
+    onClose(); 
+  };
+
+  const handlePressStart = (chatId: string) => {
+    pressTimer.current = setTimeout(() => {
+      setLongPressedChat(chatId);
+    }, 500); // 500ms de presión
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    onDeleteChat(chatId);
+    setLongPressedChat(null);
+  };
+
+  const handleCancelLongPress = () => {
+    setLongPressedChat(null);
+  };
 
   return (
     <>
@@ -226,78 +254,118 @@ export function MobileSidebar({
                         <p className="lg-text-muted text-sm">No hay conversaciones</p>
                       </motion.div>
                     ) : (
-                      filteredChats.map((chat, index) => (
-                        <motion.div
-                          key={chat.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ delay: index * 0.03, duration: 0.3 }}
-                          layout
-                          style={{ width: "100%", minWidth: 0 }}
-                        >
-                          <div
-                            data-tour={index === 0 ? "chat-item" : undefined}
-                            className={`group relative p-3 rounded-xl mb-1.5 cursor-pointer transition-all duration-300 ${
-                              activeChat === chat.id ? "lg-chat-active" : "lg-chat"
-                            }`}
-                            style={{ width: "100%", boxSizing: "border-box", overflow: "hidden" }}
-                            onClick={() => handleChatSelect(chat.id)}
+                      filteredChats.map((chat, index) => {
+                        const isLongPressed = longPressedChat === chat.id;
+                        
+                        return (
+                          <motion.div
+                            key={chat.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ delay: index * 0.03, duration: 0.3 }}
+                            layout
+                            style={{ width: "100%", minWidth: 0 }}
                           >
-                            <div className="flex items-start justify-between gap-2" style={{ minWidth: 0 }}>
-                              <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", minWidth: 0, overflow: "hidden" }}>
-                                  <div className="chat-icon-wrap" style={{ flexShrink: 0 }}>
-                                    <MessageSquare className="w-3 h-3" />
+                            <div
+                              data-tour={index === 0 ? "chat-item" : undefined}
+                              className={`group relative p-3 rounded-xl mb-1.5 cursor-pointer transition-all duration-300 ${
+                                activeChat === chat.id ? "lg-chat-active" : "lg-chat"
+                              } ${isLongPressed ? "lg-chat-long-press" : ""}`}
+                              style={{ 
+                                width: "100%", 
+                                boxSizing: "border-box", 
+                                overflow: "hidden",
+                                position: "relative"
+                              }}
+                              onClick={() => {
+                                if (!isLongPressed) {
+                                  handleChatSelect(chat.id);
+                                }
+                              }}
+                              onMouseDown={() => handlePressStart(chat.id)}
+                              onMouseUp={handlePressEnd}
+                              onMouseLeave={handlePressEnd}
+                              onTouchStart={() => handlePressStart(chat.id)}
+                              onTouchEnd={handlePressEnd}
+                              onTouchCancel={handlePressEnd}
+                            >
+                              <div className="flex items-start justify-between gap-2" style={{ minWidth: 0 }}>
+                                <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", minWidth: 0, overflow: "hidden" }}>
+                                    <div className="chat-icon-wrap" style={{ flexShrink: 0 }}>
+                                      <MessageSquare className="w-3 h-3" />
+                                    </div>
+                                    <h3
+                                      className="lg-text-primary font-medium text-sm"
+                                      style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}
+                                    >
+                                      {chat.title}
+                                    </h3>
                                   </div>
-                                  <h3
-                                    className="lg-text-primary font-medium text-sm"
-                                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}
+
+                                  <p
+                                    className="text-xs lg-text-secondary"
+                                    style={{
+                                      paddingLeft: "32px",
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                      lineHeight: "1.45",
+                                    }}
                                   >
-                                    {chat.title}
-                                  </h3>
+                                    {chat.preview}
+                                  </p>
+
+                                  <p className="text-xs lg-text-muted mt-1" style={{ paddingLeft: "32px" }}>
+                                    {chat.timestamp.toLocaleDateString()}
+                                  </p>
                                 </div>
 
-                                <p
-                                  className="text-xs lg-text-secondary"
-                                  style={{
-                                    paddingLeft: "32px",
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                    lineHeight: "1.45",
-                                  }}
-                                >
-                                  {chat.preview}
-                                </p>
+                                {activeChat === chat.id && (
+                                  <div className="active-dot" style={{ flexShrink: 0, marginTop: "4px" }} />
+                                )}
 
-                                <p className="text-xs lg-text-muted mt-1" style={{ paddingLeft: "32px" }}>
-                                  {chat.timestamp.toLocaleDateString()}
-                                </p>
+                                {/* Botón de eliminar - visible en hover o long press */}
+                                <Button
+                                  variant="ghost" 
+                                  size="icon"
+                                  className={`transition-all duration-300 h-7 w-7 rounded-lg hover:bg-red-500/20 ${
+                                    isLongPressed ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
+                                  }`}
+                                  style={{ 
+                                    flexShrink: 0,
+                                    pointerEvents: isLongPressed ? "auto" : "none"
+                                  }}
+                                  onClick={(e) => handleDeleteClick(e, chat.id)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                </Button>
                               </div>
 
-                              {activeChat === chat.id && (
-                                <div className="active-dot" style={{ flexShrink: 0, marginTop: "4px" }} />
+                              {/* Indicador de long press */}
+                              {isLongPressed && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  className="absolute inset-0 rounded-xl pointer-events-none"
+                                  style={{
+                                    background: "rgba(239, 68, 68, 0.08)",
+                                    border: "2px solid rgba(239, 68, 68, 0.3)",
+                                  }}
+                                />
                               )}
 
-                              <Button
-                                variant="ghost" size="icon"
-                                className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-7 w-7 rounded-lg hover:bg-red-500/20"
-                                style={{ flexShrink: 0 }}
-                                onClick={(e) => { e.stopPropagation(); onDeleteChat(chat.id); }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                              </Button>
+                              {/* Shimmer */}
+                              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+                                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                              </div>
                             </div>
-
-                            {/* Shimmer */}
-                            <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
-                              <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))
+                          </motion.div>
+                        );
+                      })
                     )}
                   </AnimatePresence>
                 </div>
@@ -541,6 +609,13 @@ export function MobileSidebar({
           box-shadow: var(--sb-chat-active-shadow) !important;
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Estado de long press */
+        .lg-chat-long-press {
+          transform: scale(0.98);
+          background: rgba(239, 68, 68, 0.06) !important;
+          border-color: rgba(239, 68, 68, 0.2) !important;
         }
 
         /* Chat icon wrap */
