@@ -13,6 +13,90 @@ const N8N_WEBHOOK_URL = import.meta.env.DEV
   ? "/api/chat"
   : import.meta.env.VITE_N8N_WEBHOOK_URL;
 
+// ── Mapa de errores genéricos ──────────────────────────────────
+const ERROR_MESSAGES = {
+  NETWORK: "Lo siento, Foxy está teniendo problemas de conexión en este momento. ¿Podrías intentarlo de nuevo?",
+  TIMEOUT: "Foxy está pensando, pero ha tomado más tiempo de lo esperado. Por favor, inténtalo nuevamente.",
+  SERVER: "Foxy está experimentando dificultades técnicas. Por favor, intenta reformular tu pregunta.",
+  EMPTY_RESPONSE: "Foxy no pudo generar una respuesta. Intenta ser más específico en tu consulta.",
+  PARSE: "Foxy respondió en un formato no reconocido. Por favor, intenta nuevamente.",
+  DEFAULT: "Lo siento, Foxy no puede resolver tu duda en este momento. ¿Podrías ser más específico?",
+  N8N_ERROR: "Foxy está teniendo un mal día. Por favor, intenta con una pregunta más concreta.",
+};
+
+// ── Función para obtener mensaje genérico según tipo de error ──
+function getGenericErrorMessage(error: Error): string {
+  const message = error.message.toLowerCase();
+  
+  // Errores de red
+  if (message.includes("failed to fetch") || 
+      message.includes("network") || 
+      message.includes("connection") ||
+      message.includes("econnrefused") ||
+      message.includes("econnreset")) {
+    return ERROR_MESSAGES.NETWORK;
+  }
+  
+  // Timeout
+  if (message.includes("timeout") || 
+      message.includes("timed out") ||
+      message.includes("aborted")) {
+    return ERROR_MESSAGES.TIMEOUT;
+  }
+  
+  // Error del servidor
+  if (message.includes("500") || 
+      message.includes("502") || 
+      message.includes("503") ||
+      message.includes("504") ||
+      message.includes("internal server")) {
+    return ERROR_MESSAGES.SERVER;
+  }
+  
+  // Respuesta vacía
+  if (message.includes("vacía") || 
+      message.includes("empty") ||
+      message.includes("no se recibió")) {
+    return ERROR_MESSAGES.EMPTY_RESPONSE;
+  }
+  
+  // Error de parseo
+  if (message.includes("parse") || 
+      message.includes("json") ||
+      message.includes("formato") ||
+      message.includes("format")) {
+    return ERROR_MESSAGES.PARSE;
+  }
+  
+  // Error específico de n8n
+  if (message.includes("n8n")) {
+    return ERROR_MESSAGES.N8N_ERROR;
+  }
+  
+  // Error genérico
+  return ERROR_MESSAGES.DEFAULT;
+}
+
+// ── Función para sanitizar logs (remover sessionId) ────────────
+function sanitizeLogData(data: any): any {
+  if (!data) return data;
+  
+  // Si es un objeto, clonarlo y eliminar sessionId
+  if (typeof data === 'object') {
+    const sanitized = { ...data };
+    delete sanitized.sessionId;
+    // También revisar si hay campos anidados
+    for (const key in sanitized) {
+      if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+        sanitized[key] = sanitizeLogData(sanitized[key]);
+      }
+    }
+    return sanitized;
+  }
+  
+  return data;
+}
+
 interface UseN8nChatReturn {
   chats: Chat[];
   activeChat: string;
@@ -92,7 +176,7 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
     setActiveChat(newChat.id);
   }, []);
 
-  // 🔁 Nuevo: nunca permitir que la lista de chats quede vacía
+  // Nuevo: nunca permitir que la lista de chats quede vacía
   const deleteChat = useCallback(
     (id: string) => {
       setChats((prev) => {
@@ -116,7 +200,7 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
     async (content: string) => {
       if (!content.trim()) return;
 
-      // 🛡️ Protección: si el chat activo ya no existe, crear uno nuevo
+      // Protección: si el chat activo ya no existe, crear uno nuevo
       let currentChatId = activeChat;
       if (!chats.some((c) => c.id === currentChatId)) {
         const newChat = createNewChat();
@@ -135,16 +219,16 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
       setIsTyping(true);
 
       try {
-        if (!N8N_WEBHOOK_URL) throw new Error("VITE_N8N_WEBHOOK_URL no definida");
+        if (!N8N_WEBHOOK_URL) {
+          throw new Error("VITE_N8N_WEBHOOK_URL no definida");
+        }
 
         const payload: N8nPayload = {
           action: "sendMessage",
-          sessionId: currentChatId, // 👈 Usamos el ID seguro
+          sessionId: currentChatId,
           chatInput: content.trim(),
           pregunta: content.trim(),
         };
-
-        console.log("📤 Enviando mensaje con sessionId:", currentChatId);
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
@@ -157,27 +241,38 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
         console.log("📡 Status:", res.status, "| Body length:", textResponse.length);
 
         if (!res.ok) {
-          let errorMsg = `n8n error ${res.status}`;
+          let errorDetails = `n8n error ${res.status}`;
           if (textResponse) {
             try {
               const errorJson = JSON.parse(textResponse);
-              errorMsg = errorJson.message || errorJson.error || errorMsg;
+              errorDetails = errorJson.message || errorJson.error || errorDetails;
             } catch {
               // No es JSON, usar los primeros 200 caracteres
               if (textResponse.length <= 200) {
-                errorMsg = textResponse;
+                errorDetails = textResponse;
               }
             }
             console.error("📡 Error body:", textResponse.substring(0, 200));
           }
-          throw new Error(errorMsg);
+          
+          // ✅ Log del error real en consola (sin sessionId)
+          console.error("❌ Error real de n8n:", {
+            status: res.status,
+            statusText: res.statusText,
+            details: errorDetails,
+            fullResponse: textResponse.substring(0, 500)
+          });
+          
+          throw new Error(errorDetails);
         }
 
         // Si la respuesta está vacía, tirar error claro
         if (!textResponse || textResponse.trim() === "") {
-          throw new Error(
-            "El servidor respondió con una respuesta vacía. Probablemente n8n tardó demasiado o hubo un error interno. Reintentá por favor."
+          const emptyError = new Error(
+            "El servidor respondió con una respuesta vacía. Probablemente n8n tardó demasiado o hubo un error interno."
           );
+          console.error("❌ Error real: Respuesta vacía de n8n");
+          throw emptyError;
         }
 
         // Parsear JSON de forma segura
@@ -185,13 +280,17 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
         try {
           raw = JSON.parse(textResponse);
         } catch (parseError) {
-          console.error("📡 No es JSON válido:", textResponse.substring(0, 200));
-          throw new Error(
-            "El servidor respondió en un formato no válido. Reintentá por favor."
-          );
+          console.error("❌ Error real de parseo JSON:", {
+            error: parseError,
+            response: textResponse.substring(0, 500)
+          });
+          throw new Error("El servidor respondió en un formato no válido. Reintentá por favor.");
         }
 
-        console.log("🔴 RAW n8n response:", JSON.stringify(raw, null, 2));
+        // ✅ Log sanitizado (sin sessionId)
+        const sanitizedRaw = sanitizeLogData(raw);
+        console.log("🔴 RAW n8n response (sanitizado):", JSON.stringify(sanitizedRaw, null, 2));
+        
         const normalized = Array.isArray(raw) ? raw[0] : raw;
 
         let textValue: string =
@@ -264,12 +363,26 @@ export function useN8nChat(initialChats?: Chat[]): UseN8nChatReturn {
         addMessage(currentChatId, assistantMsg);
       } catch (err) {
         const errorObj = err as Error;
-        console.error("❌ Error en sendMessage:", errorObj.message);
+        
+        // ✅ Log del error real en consola con todos los detalles (sin sessionId)
+        console.group("❌ Error en Foxy - Detalles completos");
+        console.error("Mensaje de error:", errorObj.message);
+        console.error("Stack trace:", errorObj.stack);
+        console.error("Timestamp:", new Date().toISOString());
+        console.error("URL:", N8N_WEBHOOK_URL);
+        console.groupEnd();
+        
+        // ✅ También imprimir el error en formato simple para rápida visualización
+        console.error("❌ Error real (simplificado):", errorObj.message);
+        
+        // ── Obtener mensaje genérico para el usuario ──
+        const genericMessage = getGenericErrorMessage(errorObj);
+        console.log("💬 Mensaje mostrado al usuario:", genericMessage);
         
         const errorMsg: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `⚠️ Error al conectar con el agente: ${errorObj.message}`,
+          content: genericMessage,
           timestamp: new Date(),
         };
         addMessage(currentChatId, errorMsg);
